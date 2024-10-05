@@ -13,6 +13,4 @@ spec:
     targetPort: 80
   selector:
     app: web
-  type: ClusterIP
-status:
-  loadBalancer: {}
+  type: NodePort

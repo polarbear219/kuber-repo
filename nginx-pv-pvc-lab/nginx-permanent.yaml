@@ -3,28 +3,30 @@ kind: Deployment
 metadata:
   creationTimestamp: null
   labels:
-    app: web
-  name: web
+    app: nginx
+  name: nginx
   namespace: frontend
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: web
+      app: nginx
   strategy: {}
   template:
     metadata:
       creationTimestamp: null
       labels:
-        app: web
+        app: nginx
     spec:
       containers:
       - image: nginx
         name: nginx
+        ports:
+        - containerPort: 80
         volumeMounts:
-        - name: nginx-data
-          mountPath: /usr/share/nginx/html
+        - mountPath: /usr/share/nginx/html
+          name: www
       volumes:
-        - name: nginx-data
+        - name: www
           persistentVolumeClaim:
             claimName: nginx-pvc
