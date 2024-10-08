@@ -1,55 +1,56 @@
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: v1
+kind: Service
 metadata:
-  name: wordpress-mysql
-  namespace: db
+  name: mysql
+  namespace: wordpress
+  labels:
+    app: mysql
 spec:
+  ports:
+  - port: 3306
+    name: mysql
+  clusterIP: None
+  selector:
+    app: mysql
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mysql
+  namespace: wordpress
+spec:
+  serviceName: "mysql"
+  replicas: 1
   selector:
     matchLabels:
-      app: wordpress-mysql
-  strategy:
-    type: Recreate
+      app: mysql
   template:
     metadata:
       labels:
-        app: wordpress-mysql
+        app: mysql
     spec:
       containers:
-      - image: mysql
-        name: mysql
+      - name: mysql
+        image: mysql:5.6
+        ports:
+        - containerPort: 3306
+          name: data
         env:
-        - name: MYSQL_HOSTNAME
-          valueFrom:
-            secretKeyRef:
-              name: mysql-var-secret
-              key: MYSQL_HOSTNAME
         - name: MYSQL_ROOT_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: mysql-var-secret
-              key: MYSQL_ROOT_PASSWORD
-        - name: MYSQL_DATABASE
-          valueFrom:
-            secretKeyRef:
-              name: mysql-var-secret
-              key: MYSQL_DATABASE
-        - name: MYSQL_USER
-          valueFrom:
-            secretKeyRef:
-              name: mysql-var-secret
-              key: MYSQL_USER
-        - name: MYSQL_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: mysql-var-secret
-              key: MYSQL_PASSWORD
-        ports:
-        - containerPort: 3306
-          name: mysql
+              name: wpsecret
+              key: ROOT_PASSWORD    
         volumeMounts:
-        - name: mysql-persistent-storage
+        - name: data
           mountPath: /var/lib/mysql
-      volumes:
-      - name: mysql-persistent-storage
-        persistentVolumeClaim:
-          claimName: mysql-pv-claim
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      accessModes: 
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 5Gi
+      storageClassName: standard    
